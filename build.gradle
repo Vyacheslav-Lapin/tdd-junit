@@ -1,20 +1,85 @@
 group 'ru.epam.jl.tdd'
 version '1.0-SNAPSHOT'
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
+    }
+}
+
+apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'java'
-//apply plugin: 'org.junit.platform.gradle.plugin'
 
-
-sourceCompatibility = 1.8
+compileTestJava {
+    sourceCompatibility = //'9'
+            targetCompatibility = 1.8
+    options.compilerArgs += '-parameters'
+//    options.compilerArgs += ' --permit-illegal-access'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED'
+//    options.compilerArgs += ' -J --add-opens -J jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'
+}
 
 repositories {
+    // for local libs
+    // example dep. for "./libs/lombok-edge.jar": compileOnly name: 'lombok-edge'
+//    flatDir { dirs 'libs' }
+
+    // Spring - early
+    maven { url 'http://repo.spring.io/libs-milestone' }
+    maven { url 'http://repo.spring.io/libs-release' }
+
+    mavenLocal()
     mavenCentral()
+    jcenter() // BinTray
+
+    // From GitHub
+//    maven { url 'https://jitpack.io' }
 }
 
-//junitPlatform {
-//    packages 'com.epam.jl.tdd'
-//}
+junitPlatform {
+    logManager 'org.apache.logging.log4j.jul.LogManager'
+}
+
+configurations {
+    testCompile.extendsFrom compileOnly
+}
+
+// this turns logging on in tests:
+test.testLogging.showStandardStreams = true
 
 dependencies {
-    testCompile 'org.junit.jupiter:junit-jupiter-params:+'
+
+    compile 'org.apache.logging.log4j:log4j-core:+',
+            'org.apache.logging.log4j:log4j-jul:+',
+            'io.vavr:vavr:+'
+
+//    compileOnly name: 'lombok-edge'
+    compileOnly 'org.projectlombok:lombok:+',
+            'edu.washington.cs.types.checker:checker-framework:+'
+
+    testCompile 'org.junit.jupiter:junit-jupiter-params:+',
+            'org.junit.jupiter:junit-jupiter-engine:+',
+            'org.hamcrest:java-hamcrest:+',
+            'org.mockito:mockito-all:+',
+
+            // For JUnit4 backward-compatibility
+            'org.junit.vintage:junit-vintage-engine:+'
 }
+
+// type in terminal: ./gradlew wrapper --gradle-version=4.2-rc-2
+task Wrapper(type: Wrapper) {
+    description = 'Generates gradlew[.bat] scripts'
+    gradleVersion = '4.2-rc-2'
+    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+}
+

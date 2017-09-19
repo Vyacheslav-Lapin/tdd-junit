@@ -5,13 +5,20 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Random;
-import java.util.stream.IntStream;
+import java.util.function.IntSupplier;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CalculatorTest {
+
+    @Test
+    void getXZero() {
+        assertTrue(true);
+    }
 
     @BeforeEach
     void setUp() {
@@ -33,10 +40,13 @@ class CalculatorTest {
                 () -> new Integer[]{3, 2, 5});
     }
 
-
     static class Tuple {
-        public int x;
-        public int y;
+        private int x;
+        private int y;
+
+        public Tuple(IntSupplier source) {
+            this(source.getAsInt(), source.getAsInt());
+        }
 
         public Tuple(int x, int y) {
             this.x = x;
@@ -46,24 +56,47 @@ class CalculatorTest {
         public int getSum() {
             return x + y;
         }
+
+        public int getX() {
+            return this.x;
+        }
+
+        public int getY() {
+            return this.y;
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (!(o instanceof Tuple)) return false;
+            final Tuple other = (Tuple) o;
+            if (this.getX() != other.getX()) return false;
+            if (this.getY() != other.getY()) return false;
+            return true;
+        }
+
+        public int hashCode() {
+            final int PRIME = 59;
+            int result = 1;
+            result = result * PRIME + this.getX();
+            result = result * PRIME + this.getY();
+            return result;
+        }
+
+        public String toString() {
+            return "CalculatorTest.Tuple(x=" + this.getX() + ", y=" + this.getY() + ")";
+        }
     }
 
     @TestFactory
     Stream<DynamicTest> testGen() {
         Random random = new Random();
-        return IntStream.generate(random::nextInt)
+        return Stream.generate(() -> new Tuple(random::nextInt))
                 .limit(100)
-                .mapToObj(operand -> new Tuple(operand, random.nextInt()))
                 .map(tuple -> DynamicTest.dynamicTest(
                         "Мама мыла раму",
-                        () -> assertEquals(
-                                tuple.getSum(),
-                                new Calculator().sum(tuple.x, tuple.y))));
-    }
-
-    @Test
-    void getXZero() {
-        assertTrue(true);
+                        () -> assertThat(
+                                new Calculator().sum(tuple.getX(), tuple.getY()),
+                                is(tuple.getSum()))));
     }
 
     @AfterEach
